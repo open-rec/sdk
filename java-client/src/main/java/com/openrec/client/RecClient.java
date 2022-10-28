@@ -52,19 +52,19 @@ public class RecClient {
     }
 
     public JsonRes<String> pushItems(ItemReq itemReq) {
-        return post(PUSH_ITEM_PATH, new JsonReq<>(itemReq));
+        return pushItems(new JsonReq<>(itemReq));
     }
 
     public JsonRes<String> pushUsers(UserReq userReq) {
-        return post(PUSH_USER_PATH, new JsonReq<>(userReq));
+        return pushUsers(new JsonReq<>(userReq));
     }
 
     public JsonRes<String> pushEvents(EventReq eventReq) {
-        return post(PUSH_EVENT_PATH, new JsonReq<>(eventReq));
+        return pushEvents(new JsonReq<>(eventReq));
     }
 
     public JsonRes<RecommendRes<Item>> recommend(RecommendReq recReq) {
-        return post(RECOMMEND_PATH, new JsonReq<>(recReq));
+        return recommend(new JsonReq<>(recReq));
     }
 
     public JsonRes<String> pushItems(JsonReq<ItemReq> itemReq) {
@@ -92,6 +92,6 @@ public class RecClient {
         recommendReq.setType("gul");
         recommendReq.setUserId("user-9527");
         JsonRes<RecommendRes<Item>> jsonRes = client.recommend(recommendReq);
-        RecommendRes<Item> recommendRes = jsonRes.getData();
+        System.out.println(jsonRes.getData());
     }
 }
