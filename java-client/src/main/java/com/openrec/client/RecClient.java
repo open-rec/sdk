@@ -82,16 +82,4 @@ public class RecClient {
     public JsonRes<RecommendRes<Item>> recommend(JsonReq<RecommendReq> recReq) {
         return post(RECOMMEND_PATH, recReq);
     }
-
-    public static void main(String[] args) {
-        RecClient client = new RecClient("http://localhost:13579");
-        RecommendReq recommendReq = new RecommendReq();
-        recommendReq.setDeviceId("12323-545-14fffe");
-        recommendReq.setSceneId("scene-1");
-        recommendReq.setSize(3);
-        recommendReq.setType("gul");
-        recommendReq.setUserId("user-9527");
-        JsonRes<RecommendRes<Item>> jsonRes = client.recommend(recommendReq);
-        System.out.println(jsonRes.getData());
-    }
 }
