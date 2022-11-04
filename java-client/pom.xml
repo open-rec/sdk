@@ -61,17 +61,6 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-        <!-- tmp import -->
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>aliyun-java-sdk-airec</artifactId>
-            <version>1.2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>aliyun-java-sdk-core</artifactId>
-            <version>4.2.2</version>
-        </dependency>
     </dependencies>
 
     <build>
