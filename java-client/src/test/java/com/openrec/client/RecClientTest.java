@@ -86,6 +86,7 @@ public class RecClientTest {
         JsonRes<RecommendRes<Item>> jsonRes = recClient.recommend(recommendReq);
         Assert.assertTrue(jsonRes.isStatus());
         Assert.assertEquals(jsonRes.getCode(), 200);
-        Assert.assertNotNull(jsonRes.getData());
+        RecommendRes<Item> recRes = jsonRes.getData();
+        Assert.assertNotNull(recRes);
     }
 }

@@ -33,7 +33,7 @@ public class RecClient {
         this.client = new OkHttpClient();
     }
 
-    private <RES> JsonRes<RES> post(String path, Object data) {
+    private <RES> JsonRes<RES> post(String path, Object data, Class clazz) {
         RequestBody requestBody = RequestBody.create(PROTOCOL_TYPE, ToolUtils.objToJson(data));
         Request request = new Request.Builder()
                 .url(endpoint + path)
@@ -43,7 +43,7 @@ public class RecClient {
         try {
             Response strRes = client.newCall(request).execute();
             if(strRes!=null && strRes.isSuccessful()) {
-                jsonRes = ToolUtils.jsonToObj(strRes.body().string(), new TypeToken<JsonRes<RES>>() {}.getType());
+                jsonRes = ToolUtils.jsonToResponse(strRes.body().string(), clazz);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -68,18 +68,18 @@ public class RecClient {
     }
 
     public JsonRes<String> pushItems(JsonReq<ItemReq> itemReq) {
-        return post(PUSH_ITEM_PATH, itemReq);
+        return post(PUSH_ITEM_PATH, itemReq, String.class);
     }
 
     public JsonRes<String> pushUsers(JsonReq<UserReq> userReq) {
-        return post(PUSH_USER_PATH, userReq);
+        return post(PUSH_USER_PATH, userReq, String.class);
     }
 
     public JsonRes<String> pushEvents(JsonReq<EventReq> eventReq) {
-        return post(PUSH_EVENT_PATH, eventReq);
+        return post(PUSH_EVENT_PATH, eventReq, String.class);
     }
 
     public JsonRes<RecommendRes<Item>> recommend(JsonReq<RecommendReq> recReq) {
-        return post(RECOMMEND_PATH, recReq);
+        return post(RECOMMEND_PATH, recReq, RecommendRes.class);
     }
 }

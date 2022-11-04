@@ -1,6 +1,9 @@
 package com.openrec.client.utils;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.$Gson$Preconditions;
+import com.google.gson.internal.$Gson$Types;
+import com.openrec.proto.JsonResType;
 
 import java.lang.reflect.Type;
 
@@ -22,5 +25,9 @@ public class ToolUtils {
 
     public static <T> T jsonToObj(String json, Type type) {
         return gson.fromJson(json, type);
+    }
+
+    public static <T> T jsonToResponse(String json, Class clazz) {
+        return jsonToObj(json, $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(new JsonResType(clazz))));
     }
 }
