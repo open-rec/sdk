@@ -30,4 +30,8 @@ public class ToolUtils {
     public static <T> T jsonToResponse(String json, Class clazz) {
         return jsonToObj(json, $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(new JsonResType(clazz))));
     }
+
+    public static <T> T jsonToResponse(String json, Type type) {
+        return jsonToObj(json, $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(type)));
+    }
 }

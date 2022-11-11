@@ -13,6 +13,7 @@ import com.openrec.proto.model.Item;
 import okhttp3.*;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 public class RecClient {
 
@@ -51,6 +52,24 @@ public class RecClient {
         return jsonRes;
     }
 
+    private <RES> JsonRes<RES> post(String path, Object data, Type type) {
+        RequestBody requestBody = RequestBody.create(PROTOCOL_TYPE, ToolUtils.objToJson(data));
+        Request request = new Request.Builder()
+                .url(endpoint + path)
+                .post(requestBody)
+                .build();
+        JsonRes<RES> jsonRes = null;
+        try {
+            Response strRes = client.newCall(request).execute();
+            if(strRes!=null && strRes.isSuccessful()) {
+                jsonRes = ToolUtils.jsonToResponse(strRes.body().string(), type);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return jsonRes;
+    }
+
     public JsonRes<String> pushItems(ItemReq itemReq) {
         return pushItems(new JsonReq<>(itemReq));
     }
@@ -80,6 +99,6 @@ public class RecClient {
     }
 
     public JsonRes<RecommendRes<Item>> recommend(JsonReq<RecommendReq> recReq) {
-        return post(RECOMMEND_PATH, recReq, RecommendRes.class);
+        return post(RECOMMEND_PATH, recReq, new TypeToken<JsonRes<RecommendRes<Item>>>(){}.getType());
     }
 }
