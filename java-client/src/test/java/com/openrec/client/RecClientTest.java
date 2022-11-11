@@ -13,6 +13,7 @@ import com.openrec.proto.model.User;
 import org.junit.Assert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RecClientTest {
@@ -79,14 +80,29 @@ public class RecClientTest {
     public void recommend() {
         RecommendReq recommendReq = new RecommendReq();
         recommendReq.setDeviceId("12323-545-14fffe");
-        recommendReq.setSceneId("scene-1");
+        recommendReq.setScene("scene-1");
         recommendReq.setSize(3);
-        recommendReq.setType("gul");
         recommendReq.setUserId("user-9527");
         JsonRes<RecommendRes<Item>> jsonRes = recClient.recommend(recommendReq);
         Assert.assertTrue(jsonRes.isStatus());
         Assert.assertEquals(jsonRes.getCode(), 200);
         RecommendRes<Item> recRes = jsonRes.getData();
-        Assert.assertNotNull(recRes);
+        Assert.assertTrue(recRes.getResults().size()==0);
+
+        recommendReq.setScene("scene_0");
+        recommendReq.setItemIds(Arrays.asList("item_5267", "item_5268"));
+        jsonRes = recClient.recommend(recommendReq);
+        Assert.assertTrue(jsonRes.isStatus());
+        Assert.assertEquals(jsonRes.getCode(), 200);
+        recRes = jsonRes.getData();
+        Assert.assertTrue(recRes.getResults().size()>0);
+
+        recommendReq.setDebug(true);
+        jsonRes = recClient.recommend(recommendReq);
+        Assert.assertTrue(jsonRes.isStatus());
+        Assert.assertEquals(jsonRes.getCode(), 200);
+        recRes = jsonRes.getData();
+        Assert.assertTrue(recRes.getResults().size()>0);
+        Assert.assertNotNull(recRes.getDetailInfos());
     }
 }
