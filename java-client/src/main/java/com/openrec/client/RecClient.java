@@ -43,7 +43,7 @@ public class RecClient {
         JsonRes<RES> jsonRes = null;
         try {
             Response strRes = client.newCall(request).execute();
-            if(strRes!=null && strRes.isSuccessful()) {
+            if (strRes != null && strRes.isSuccessful()) {
                 jsonRes = ToolUtils.jsonToResponse(strRes.body().string(), clazz);
             }
         } catch (IOException e) {
@@ -61,7 +61,7 @@ public class RecClient {
         JsonRes<RES> jsonRes = null;
         try {
             Response strRes = client.newCall(request).execute();
-            if(strRes!=null && strRes.isSuccessful()) {
+            if (strRes != null && strRes.isSuccessful()) {
                 jsonRes = ToolUtils.jsonToResponse(strRes.body().string(), type);
             }
         } catch (IOException e) {
@@ -99,6 +99,7 @@ public class RecClient {
     }
 
     public JsonRes<RecommendRes<Item>> recommend(JsonReq<RecommendReq> recReq) {
-        return post(RECOMMEND_PATH, recReq, new TypeToken<JsonRes<RecommendRes<Item>>>(){}.getType());
+        return post(RECOMMEND_PATH, recReq, new TypeToken<JsonRes<RecommendRes<Item>>>() {
+        }.getType());
     }
 }
