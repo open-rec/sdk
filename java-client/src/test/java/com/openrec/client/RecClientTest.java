@@ -10,20 +10,56 @@ import com.openrec.proto.biz.recommend.RecommendRes;
 import com.openrec.proto.model.Event;
 import com.openrec.proto.model.Item;
 import com.openrec.proto.model.User;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Protocol;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class RecClientTest {
 
-    private static final String TEST_ENDPOINT = "http://localhost:13579";
+    private static final String TEST_ENDPOINT = "http://openrec.test";
     private RecClient recClient;
+    private List<String> requestedPaths;
+    private AtomicInteger recommendCalls;
 
     @org.junit.Before
-    public void setUp() throws Exception {
-        recClient = new RecClient(TEST_ENDPOINT);
+    public void setUp() {
+        requestedPaths = new ArrayList<>();
+        recommendCalls = new AtomicInteger();
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addInterceptor(chain -> {
+                    String path = chain.request().url().encodedPath();
+                    requestedPaths.add(path);
+                    String json = path.equals("/api/recommend")
+                            ? recommendResponse(recommendCalls.incrementAndGet())
+                            : "{\"code\":200,\"status\":true,\"msg\":\"\",\"data\":\"ok\"}";
+                    return new Response.Builder()
+                            .request(chain.request())
+                            .protocol(Protocol.HTTP_1_1)
+                            .code(200)
+                            .message("OK")
+                            .body(ResponseBody.create(MediaType.parse("application/json"), json))
+                            .build();
+                })
+                .build();
+        recClient = new RecClient(TEST_ENDPOINT, client);
+    }
+
+    private static String recommendResponse(int call) {
+        if (call == 1) {
+            return "{\"code\":200,\"status\":true,\"msg\":\"\","
+                    + "\"data\":{\"results\":[],\"detailInfos\":null}}";
+        }
+        String details = call >= 3 ? "[{\"id\":\"item_5267\"}]" : "null";
+        return "{\"code\":200,\"status\":true,\"msg\":\"\","
+                + "\"data\":{\"results\":[{}],\"detailInfos\":" + details + "}}";
     }
 
     @org.junit.Test
@@ -77,6 +113,8 @@ public class RecClientTest {
         jsonRes = recClient.pushEvents(eventReq);
         Assert.assertTrue(jsonRes.isStatus());
         Assert.assertEquals(jsonRes.getCode(), 200);
+        Assert.assertEquals(Arrays.asList("/api/push/item", "/api/push/user", "/api/push/event"),
+                requestedPaths);
     }
 
     @org.junit.Test
@@ -107,5 +145,7 @@ public class RecClientTest {
         recRes = jsonRes.getData();
         Assert.assertTrue(recRes.getResults().size()>0);
         Assert.assertNotNull(recRes.getDetailInfos());
+        Assert.assertEquals(Arrays.asList("/api/recommend", "/api/recommend", "/api/recommend"),
+                requestedPaths);
     }
 }

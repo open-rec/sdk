@@ -30,8 +30,12 @@ public class RecClient {
     private OkHttpClient client;
 
     public RecClient(String endpoint) {
+        this(endpoint, new OkHttpClient());
+    }
+
+    RecClient(String endpoint, OkHttpClient client) {
         this.endpoint = endpoint;
-        this.client = new OkHttpClient();
+        this.client = client;
     }
 
     private <RES> JsonRes<RES> post(String path, Object data, Class clazz) {
