@@ -10,6 +10,7 @@ import com.openrec.proto.biz.push.UserReq;
 import com.openrec.proto.biz.recommend.RecommendReq;
 import com.openrec.proto.biz.recommend.RecommendRes;
 import com.openrec.proto.model.Item;
+import com.openrec.proto.model.User;
 import okhttp3.*;
 
 import java.io.IOException;
@@ -21,6 +22,8 @@ public class RecClient {
             parse("application/json; charset=utf-8");
     private static final String API_PATH = "/api";
     private static final String RECOMMEND_PATH = API_PATH + "/recommend";
+    private static final String RECOMMEND_ITEM_PATH = RECOMMEND_PATH + "/item";
+    private static final String RECOMMEND_USER_PATH = RECOMMEND_PATH + "/user";
     private static final String PUSH_PATH = API_PATH + "/push";
     private static final String PUSH_ITEM_PATH = PUSH_PATH + "/item";
     private static final String PUSH_USER_PATH = PUSH_PATH + "/user";
@@ -90,6 +93,14 @@ public class RecClient {
         return recommend(new JsonReq<>(recReq));
     }
 
+    public JsonRes<RecommendRes<Item>> recommendItems(RecommendReq recReq) {
+        return recommendItems(new JsonReq<>(recReq));
+    }
+
+    public JsonRes<RecommendRes<User>> recommendUsers(RecommendReq recReq) {
+        return recommendUsers(new JsonReq<>(recReq));
+    }
+
     public JsonRes<String> pushItems(JsonReq<ItemReq> itemReq) {
         return post(PUSH_ITEM_PATH, itemReq, String.class);
     }
@@ -104,6 +115,16 @@ public class RecClient {
 
     public JsonRes<RecommendRes<Item>> recommend(JsonReq<RecommendReq> recReq) {
         return post(RECOMMEND_PATH, recReq, new TypeToken<JsonRes<RecommendRes<Item>>>() {
+        }.getType());
+    }
+
+    public JsonRes<RecommendRes<Item>> recommendItems(JsonReq<RecommendReq> recReq) {
+        return post(RECOMMEND_ITEM_PATH, recReq, new TypeToken<JsonRes<RecommendRes<Item>>>() {
+        }.getType());
+    }
+
+    public JsonRes<RecommendRes<User>> recommendUsers(JsonReq<RecommendReq> recReq) {
+        return post(RECOMMEND_USER_PATH, recReq, new TypeToken<JsonRes<RecommendRes<User>>>() {
         }.getType());
     }
 }

@@ -10,6 +10,7 @@ import com.openrec.proto.biz.recommend.RecommendRes;
 import com.openrec.proto.model.Event;
 import com.openrec.proto.model.Item;
 import com.openrec.proto.model.User;
+import com.openrec.proto.model.User;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -37,7 +38,7 @@ public class RecClientTest {
                 .addInterceptor(chain -> {
                     String path = chain.request().url().encodedPath();
                     requestedPaths.add(path);
-                    String json = path.equals("/api/recommend")
+                    String json = path.startsWith("/api/recommend")
                             ? recommendResponse(recommendCalls.incrementAndGet())
                             : "{\"code\":200,\"status\":true,\"msg\":\"\",\"data\":\"ok\"}";
                     return new Response.Builder()
@@ -145,7 +146,11 @@ public class RecClientTest {
         recRes = jsonRes.getData();
         Assert.assertTrue(recRes.getResults().size()>0);
         Assert.assertNotNull(recRes.getDetailInfos());
-        Assert.assertEquals(Arrays.asList("/api/recommend", "/api/recommend", "/api/recommend"),
+        Assert.assertTrue(recClient.recommendItems(recommendReq).isStatus());
+        JsonRes<RecommendRes<User>> userRes = recClient.recommendUsers(recommendReq);
+        Assert.assertTrue(userRes.isStatus());
+        Assert.assertEquals(Arrays.asList("/api/recommend", "/api/recommend", "/api/recommend",
+                "/api/recommend/item", "/api/recommend/user"),
                 requestedPaths);
     }
 }

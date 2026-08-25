@@ -99,6 +99,14 @@ JsonRes<RecommendRes<Item>> jsonRes = recClient.recommend(recommendReq);
 List<ScoreResult> results = jsonRes.getData().getResults();
 ```
 
+`recommend(...)` remains compatible with `/api/recommend`. New integrations should use
+`recommendItems(...)` for `/api/recommend/item`. The SDK reserves `recommendUsers(...)` and its
+`RecommendRes<User>` response type, but the server currently returns code 501 for that endpoint:
+
+```java
+JsonRes<RecommendRes<User>> jsonRes = recClient.recommendUsers(recommendReq);
+```
+
 `results` holds ids and scores in final order. Set `recommendReq.setDebug(true)` to also get
 `getDetailInfos()` populated with the full `Item` objects — useful while integrating, but it costs an
 extra Redis round trip per request.
