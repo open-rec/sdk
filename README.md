@@ -1,5 +1,9 @@
 # sdk
 
+[![CI](https://github.com/open-rec/sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/open-rec/sdk/actions/workflows/ci.yml)
+![Java](https://img.shields.io/badge/Java-8-ED8B00?logo=openjdk&logoColor=white)
+![Maven](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)
+
 Client libraries for [rec-server](https://github.com/open-rec/rec-server).
 
 | Module | Language | Artifact |
