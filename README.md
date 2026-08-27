@@ -50,7 +50,8 @@ One instance is enough — it holds a single `OkHttpClient`, which is thread-saf
 #### push
 
 Every push takes a command plus a batch, so one call can carry many rows. `INSERT` and `UPDATE` are
-both upserts server-side; `DELETE` removes by id.
+both upserts server-side. `DELETE` removes users and items by id; event deletion is not currently
+accepted because event history is append-only.
 
 ```java
 ItemReq itemReq = new ItemReq();
@@ -148,6 +149,7 @@ client if you need one.
 
 ### more examples
 
-See `RecClientTest` in `java-client/src/test`. It expects a `rec-server` running on
-`http://localhost:13579` — start one as described in
-[example_standalone](https://github.com/open-rec/example/tree/master/example_standalone).
+See `RecClientTest` in `java-client/src/test`. It uses an in-memory OkHttp interceptor, so
+`mvn test` does not require a running server. For a real SDK-to-server acceptance path, start
+[example_standalone](https://github.com/open-rec/example/tree/master/example_standalone) and point a
+client at `http://localhost:13579`.
