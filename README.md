@@ -105,8 +105,8 @@ List<ScoreResult> results = jsonRes.getData().getResults();
 ```
 
 `recommend(...)` remains compatible with `/api/recommend`. New integrations should use
-`recommendItems(...)` for `/api/recommend/item`. The SDK reserves `recommendUsers(...)` and its
-`RecommendRes<User>` response type, but the server currently returns code 501 for that endpoint:
+`recommendItems(...)` for `/api/recommend/item`. Social/user recommendation uses
+`recommendUsers(...)`, `/api/recommend/user`, and its `RecommendRes<User>` response type:
 
 ```java
 JsonRes<RecommendRes<User>> jsonRes = recClient.recommendUsers(recommendReq);
