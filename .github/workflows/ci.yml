@@ -73,8 +73,10 @@ jobs:
           java-version: '8'
           cache: maven
       - name: Install protocol artifact
-        working-directory: rec-server
-        run: mvn --batch-mode --no-transfer-progress -pl proto -am install -DskipTests
+        run: >-
+          mvn --batch-mode --no-transfer-progress
+          -f sdk/java-client/ci/rec-proto-pom.xml
+          install -DskipTests
       - name: Run Java client tests
         working-directory: sdk/java-client
         run: mvn --batch-mode --no-transfer-progress clean test

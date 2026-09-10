@@ -106,7 +106,8 @@ class RecClient:
         try:
             response = self.opener.open(request, timeout=self.timeout)
         except HTTPError as error:
-            error.close()
+            if error.fp is not None:
+                error.close()
             return None
         with response:
             raw = json.load(response)
