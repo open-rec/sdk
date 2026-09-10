@@ -1,32 +1,52 @@
-# sdk
+# OpenRec SDK
 
 [![CI](https://github.com/open-rec/sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/open-rec/sdk/actions/workflows/ci.yml)
 ![Java](https://img.shields.io/badge/Java-8-ED8B00?logo=openjdk&logoColor=white)
-![Maven](https://img.shields.io/badge/build-Maven-C71A36?logo=apachemaven&logoColor=white)
+![Go](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)
 
-Client libraries for [rec-server](https://github.com/open-rec/rec-server).
+Client libraries for the [OpenRec rec-server](https://github.com/open-rec/rec-server) HTTP API.
+All clients support batched user, item, and event pushes as well as legacy item, typed item, and
+typed user recommendations.
 
-| Module | Language | Artifact |
+| Client | Runtime | Package |
 |---|---|---|
-| [java-client](java-client) | Java 8 | `com.openrec:rec-client` |
+| [java-client](java-client) | Java 8 | `com.openrec:rec-client:1.0-SNAPSHOT` |
+| [go-client](go-client) | Go 1.20+ | `github.com/open-rec/sdk/go-client` |
+| [python-client](python-client) | Python 3.9+ | distribution `openrec-client`, import `openrec` |
 
-## java-client
+## API mapping
 
-A thin OkHttp wrapper over the server's HTTP API. It handles JSON (Gson), the `JsonReq` / `JsonRes`
-envelopes and the generic response types, so you work with the POJOs from `rec-proto` directly.
+| Operation | HTTP path | Java | Go | Python |
+|---|---|---|---|---|
+| Push items | `/api/push/item` | `pushItems` | `PushItems` | `push_items` |
+| Push users | `/api/push/user` | `pushUsers` | `PushUsers` | `push_users` |
+| Push events | `/api/push/event` | `pushEvents` | `PushEvents` | `push_events` |
+| Legacy item recommend | `/api/recommend` | `recommend` | `Recommend` | `recommend` |
+| Item recommend | `/api/recommend/item` | `recommendItems` | `RecommendItems` | `recommend_items` |
+| User recommend | `/api/recommend/user` | `recommendUsers` | `RecommendUsers` | `recommend_users` |
 
-### build
+New integrations should use the typed item or user recommendation methods. The legacy endpoint is
+kept for compatibility. Push requests default to `INSERT`; `INSERT` and `UPDATE` are upserts.
+User/item `DELETE` removes entities by ID. Events are append-only and do not support deletion.
 
-`rec-client` depends on `rec-proto`, which comes from the `rec-server` repo — build that first or the
-dependency will not resolve:
+Every convenience method generates a request ID. Java also accepts `JsonReq<T>` overloads, Go has
+`WithRequest` variants, and Python has `_request` variants or a `request_id=` argument for supplying
+a trace ID explicitly.
+
+## Java client
+
+`java-client` depends on `rec-proto` from the `rec-server` repository. Install that artifact before
+building the client:
 
 ```shell
-git clone https://github.com/open-rec/rec-server.git
-cd rec-server && mvn clean install -DskipTests
-cd ..
-
-cd sdk/java-client && mvn clean install -DskipTests
+cd rec-server
+mvn clean install -DskipTests
+cd ../sdk/java-client
+mvn clean install
 ```
+
+Add the installed client to a Maven project:
 
 ```xml
 <dependency>
@@ -36,120 +56,158 @@ cd sdk/java-client && mvn clean install -DskipTests
 </dependency>
 ```
 
-### usage
-
-The constructor takes the server's base URL; paths (`/api/recommend`, `/api/push/*`) are appended for
-you:
+### Push and recommend
 
 ```java
-RecClient recClient = new RecClient("http://localhost:13579");
-```
+RecClient client = new RecClient("http://localhost:13579");
 
-One instance is enough — it holds a single `OkHttpClient`, which is thread-safe and pools connections.
-
-#### push
-
-Every push takes a command plus a batch, so one call can carry many rows. `INSERT` and `UPDATE` are
-both upserts server-side. `DELETE` removes users and items by id; event deletion is not currently
-accepted because event history is append-only.
-
-```java
-ItemReq itemReq = new ItemReq();
-itemReq.setCmd(PushCmd.INSERT);
-List<Item> batchItems = new ArrayList<>();
 Item item = new Item();
-item.setId("item-test");
-item.setCategory("category-1");
-item.setScene("scene-1");
+item.setId("item-1");
+item.setScene("home");
 item.setStatus(1);
-item.setTitle("title-test");
-item.setTags("tags-1,tags-2");
-item.setPubTime(String.valueOf(System.currentTimeMillis() / 1000));
-batchItems.add(item);
-itemReq.setData(batchItems);
 
-JsonRes<String> jsonRes = recClient.pushItems(itemReq);
-```
+ItemReq push = new ItemReq();
+push.setCmd(PushCmd.INSERT);
+push.setData(Collections.singletonList(item));
+JsonRes<String> pushRes = client.pushItems(push);
 
-`pushUsers(UserReq)` and `pushEvents(EventReq)` follow the same shape.
+RecommendReq recommend = new RecommendReq();
+recommend.setUserId("user-1");
+recommend.setScene("home");
+recommend.setSize(10);
+JsonRes<RecommendRes<Item>> recRes = client.recommendItems(recommend);
 
-Events are what drive recall quality: `click` events become the triggers for i2i and embedding recall,
-and `expose` events feed the exposure filter.
-
-```java
-EventReq eventReq = new EventReq();
-eventReq.setCmd(PushCmd.INSERT);
-Event event = new Event();
-event.setUserId("user-9527");
-event.setItemId("item-test");
-event.setScene("scene-1");
-event.setType("click");
-event.setValue("1");
-event.setTime(String.valueOf(System.currentTimeMillis() / 1000));
-eventReq.setData(Collections.singletonList(event));
-
-recClient.pushEvents(eventReq);
-```
-
-#### recommend
-
-```java
-RecommendReq recommendReq = new RecommendReq();
-recommendReq.setDeviceId("12323-545-14fffe");
-recommendReq.setScene("scene-1");
-recommendReq.setSize(3);
-recommendReq.setUserId("user-9527");
-
-JsonRes<RecommendRes<Item>> jsonRes = recClient.recommend(recommendReq);
-List<ScoreResult> results = jsonRes.getData().getResults();
-```
-
-`recommend(...)` remains compatible with `/api/recommend`. New integrations should use
-`recommendItems(...)` for `/api/recommend/item`. Social/user recommendation uses
-`recommendUsers(...)`, `/api/recommend/user`, and its `RecommendRes<User>` response type:
-
-```java
-JsonRes<RecommendRes<User>> jsonRes = recClient.recommendUsers(recommendReq);
-```
-
-`results` holds ids and scores in final order. Set `recommendReq.setDebug(true)` to also get
-`getDetailInfos()` populated with the full `Item` objects — useful while integrating, but it costs an
-extra Redis round trip per request.
-
-Pass `setItemIds(...)` to add explicit triggers, e.g. the item currently being viewed on a
-related-items page.
-
-### correlating logs
-
-Each call wraps your payload in a `JsonReq` with a generated `requestId`. The server puts it into its
-logging MDC, so every server-side line for that request carries it. To use your own trace id, build
-the envelope yourself — every method has an overload taking `JsonReq<T>`:
-
-```java
-JsonReq<RecommendReq> req = new JsonReq<>(recommendReq);
-req.setRequestId(myTraceId);
-JsonRes<RecommendRes<Item>> res = recClient.recommend(req);
-```
-
-### error handling
-
-Non-2xx responses yield a **null** `JsonRes` rather than an exception, and transport failures are
-rethrown as `RuntimeException`. So check for null before reading, and inspect `getCode()`
-(`ProtoCode`: 200 / 400 / 404 / 500 / 504) on the result:
-
-```java
-JsonRes<RecommendRes<Item>> res = recClient.recommend(recommendReq);
-if (res == null || res.getCode() != ProtoCode.SUCCESS) {
-    // fall back to a default list
+if (recRes != null && recRes.getCode() == ProtoCode.SUCCESS) {
+    List<ScoreResult> results = recRes.getData().getResults();
 }
 ```
 
-There is no built-in retry or timeout override; supply your own `OkHttpClient` policy by wrapping the
-client if you need one.
+Use `pushUsers` and `pushEvents` with `UserReq` and `EventReq`. Use `recommendUsers` when the target
+is a user. Setting `debug=true` returns full entities in `detailInfos`, at the cost of additional
+serving lookups. `itemIds` can provide explicit item triggers.
 
-### more examples
+## Go client
 
-See `RecClientTest` in `java-client/src/test`. It uses an in-memory OkHttp interceptor, so
-`mvn test` does not require a running server. For a real SDK-to-server acceptance path, start
-[example_standalone](https://github.com/open-rec/example/tree/master/example_standalone) and point a
-client at `http://localhost:13579`.
+```shell
+go get github.com/open-rec/sdk/go-client
+```
+
+### Push and recommend
+
+```go
+package main
+
+import (
+    "context"
+    "log"
+
+    openrec "github.com/open-rec/sdk/go-client"
+)
+
+func main() {
+    ctx := context.Background()
+    client := openrec.NewClient("http://localhost:13579")
+
+    pushRes, err := client.PushItems(ctx, openrec.ItemRequest{
+        Cmd: openrec.PushInsert,
+        Data: []openrec.Item{{ID: "item-1", Scene: "home", Status: 1}},
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    recRes, err := client.RecommendItems(ctx, openrec.RecommendRequest{
+        UserID: "user-1",
+        Scene:  "home",
+        Size:   10,
+    })
+    if err != nil {
+        log.Fatal(err)
+    }
+    if pushRes != nil && recRes != nil && recRes.Code == openrec.CodeSuccess && recRes.Data != nil {
+        log.Printf("results: %+v", recRes.Data.Results)
+    }
+}
+```
+
+`NewClientWithHTTPClient` accepts a custom `http.Client` for timeouts, tracing, transports, and
+retry policies. Use `PushUsers`, `PushEvents`, or `RecommendUsers` for the corresponding types.
+
+## Python client
+
+Install from the SDK checkout:
+
+```shell
+python -m pip install ./python-client
+```
+
+### Push and recommend
+
+```python
+from openrec import (
+    CODE_SUCCESS,
+    Item,
+    ItemRequest,
+    PushCmd,
+    RecClient,
+    RecommendRequest,
+)
+
+client = RecClient("http://localhost:13579", timeout=5)
+
+push_res = client.push_items(
+    ItemRequest(
+        cmd=PushCmd.INSERT,
+        data=[Item(id="item-1", scene="home", status=1)],
+    )
+)
+
+rec_res = client.recommend_items(
+    RecommendRequest(user_id="user-1", scene="home", size=10)
+)
+if rec_res is not None and rec_res.code == CODE_SUCCESS and rec_res.data is not None:
+    print(rec_res.data.results)
+```
+
+Use `push_users`, `push_events`, or `recommend_users` for the corresponding types. The Python
+runtime has no third-party dependencies; a custom `urllib` opener may be passed to `RecClient`.
+
+## Error handling
+
+All clients return a null/nil/`None` response for non-2xx HTTP status codes. Check both the response
+and its protocol `code` before reading `data`.
+
+- Java wraps transport failures in `RuntimeException`.
+- Go returns transport and JSON failures as `error`.
+- Python raises transport and JSON decoding exceptions.
+
+There is no built-in retry policy. Configure retries and timeouts through the language-specific
+HTTP client where available.
+
+## Development
+
+Run commands from the client directory they belong to:
+
+```shell
+# Java: Alibaba-style Eclipse formatter through Java 8-compatible Spotless
+cd java-client
+mvn spotless:apply
+mvn spotless:check
+mvn test
+
+# Go: standard Go formatting, analysis, and tests
+cd ../go-client
+gofmt -w .
+go vet ./...
+go test ./...
+
+# Python: PEP 8 linting/formatting and standard-library tests
+cd ../python-client
+python -m pip install -e ".[dev]"
+ruff check .
+ruff format .
+python -m unittest discover -s tests -v
+```
+
+CI checks formatting and runs tests without requiring a live rec-server. For an end-to-end check,
+start the standalone example and point a client at `http://localhost:13579`.

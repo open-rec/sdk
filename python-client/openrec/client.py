@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Optional, Type, TypeVar
+from typing import Any, Optional, TypeVar
 from urllib.error import HTTPError
 from urllib.request import OpenerDirector, Request, build_opener
 
@@ -15,7 +15,6 @@ from .models import (
     User,
     UserRequest,
 )
-
 
 T = TypeVar("T")
 
@@ -94,7 +93,9 @@ class RecClient:
         raw = self._post("/api/recommend/user", request)
         return _recommend_response(raw, User)
 
-    def _post(self, path: str, envelope: JsonRequest[Any]) -> Optional[JsonResponse[Any]]:
+    def _post(
+        self, path: str, envelope: JsonRequest[Any]
+    ) -> Optional[JsonResponse[Any]]:
         payload = json.dumps(envelope.to_dict(), separators=(",", ":")).encode()
         request = Request(
             self.endpoint + path,
@@ -124,12 +125,12 @@ class RecClient:
 
 
 def _recommend_response(
-    response: Optional[JsonResponse[Dict[str, Any]]], detail_type: Type[T]
+    response: Optional[JsonResponse[dict[str, Any]]], detail_type: type[T]
 ) -> Optional[JsonResponse[RecommendResponse[T]]]:
     if response is None or response.data is None:
         return response  # type: ignore[return-value]
     data = response.data
-    details: Optional[List[T]] = None
+    details: Optional[list[T]] = None
     if data.get("detailInfos") is not None:
         details = [_from_json(detail_type, value) for value in data["detailInfos"]]
     result = RecommendResponse(
@@ -159,5 +160,6 @@ _PYTHON_NAMES = {
 }
 
 
-def _from_json(model_type: Type[T], value: Dict[str, Any]) -> T:
-    return model_type(**{_PYTHON_NAMES.get(key, key): item for key, item in value.items()})
+def _from_json(model_type: type[T], value: dict[str, Any]) -> T:
+    fields = {_PYTHON_NAMES.get(key, key): item for key, item in value.items()}
+    return model_type(**fields)

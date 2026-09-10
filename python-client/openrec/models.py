@@ -1,8 +1,7 @@
 from dataclasses import dataclass, field, fields, is_dataclass
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, Generic, Optional, TypeVar
 from uuid import uuid4
-
 
 CODE_SUCCESS = 200
 CODE_BAD_REQUEST = 400
@@ -28,7 +27,7 @@ class JsonRequest(Generic[T]):
     body: T
     request_id: str = field(default_factory=lambda: str(uuid4()))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"requestId": self.request_id, "body": to_json_dict(self.body)}
 
 
@@ -65,7 +64,7 @@ class User:
     country: Optional[str] = None
     city: Optional[str] = None
     phone: Optional[str] = None
-    tags: Optional[List[str]] = None
+    tags: Optional[list[str]] = None
     register_time: Optional[str] = None
     login_time: Optional[str] = None
     ext_fields: Any = None
@@ -87,19 +86,19 @@ class Event:
 
 @dataclass
 class ItemRequest:
-    data: Optional[List[Item]] = None
+    data: Optional[list[Item]] = None
     cmd: PushCmd = PushCmd.INSERT
 
 
 @dataclass
 class UserRequest:
-    data: Optional[List[User]] = None
+    data: Optional[list[User]] = None
     cmd: PushCmd = PushCmd.INSERT
 
 
 @dataclass
 class EventRequest:
-    data: Optional[List[Event]] = None
+    data: Optional[list[Event]] = None
     cmd: PushCmd = PushCmd.INSERT
 
 
@@ -109,11 +108,11 @@ class RecommendRequest:
     size: int = 0
     user_id: Optional[str] = None
     device_id: Optional[str] = None
-    item_ids: Optional[List[str]] = None
+    item_ids: Optional[list[str]] = None
     type: Optional[str] = None
     debug: bool = False
     target_type: str = TARGET_ITEM
-    params: Optional[Dict[str, Any]] = None
+    params: Optional[dict[str, Any]] = None
 
 
 @dataclass
@@ -124,26 +123,26 @@ class ScoreResult:
     recall_score: Optional[float] = None
     recall_fusion_score: Optional[float] = None
     rank_score: Optional[float] = None
-    recall_scores: Optional[Dict[str, float]] = None
+    recall_scores: Optional[dict[str, float]] = None
 
 
 @dataclass
 class RecommendResponse(Generic[T]):
-    results: List[ScoreResult] = field(default_factory=list)
-    detail_infos: Optional[List[T]] = None
+    results: list[ScoreResult] = field(default_factory=list)
+    detail_infos: Optional[list[T]] = None
 
 
 @dataclass
 class DislikeValue:
     id: Optional[str] = None
     category: Optional[str] = None
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
 
 @dataclass
 class VectorResult:
     id: Optional[str] = None
-    vector: Optional[List[float]] = None
+    vector: Optional[list[float]] = None
 
 
 _JSON_NAMES = {

@@ -75,7 +75,7 @@ public class RecClientTest {
         item.setStatus(1);
         item.setTitle("title-test");
         item.setTags("tags-1,tags-2");
-        item.setPubTime(String.valueOf(System.currentTimeMillis()/1000));
+        item.setPubTime(String.valueOf(System.currentTimeMillis() / 1000));
         batchItems.add(item);
         itemReq.setData(batchItems);
         JsonRes<String> jsonRes = recClient.pushItems(itemReq);
@@ -108,7 +108,7 @@ public class RecClientTest {
         event.setDeviceId("bh-89757");
         event.setType("click");
         event.setTraceId("open-rec");
-        event.setTime(String.valueOf(System.currentTimeMillis()/1000));
+        event.setTime(String.valueOf(System.currentTimeMillis() / 1000));
         batchEvents.add(event);
         eventReq.setData(batchEvents);
         jsonRes = recClient.pushEvents(eventReq);
@@ -129,7 +129,7 @@ public class RecClientTest {
         Assert.assertTrue(jsonRes.isStatus());
         Assert.assertEquals(jsonRes.getCode(), 200);
         RecommendRes<Item> recRes = jsonRes.getData();
-        Assert.assertTrue(recRes.getResults().size()==0);
+        Assert.assertTrue(recRes.getResults().size() == 0);
 
         recommendReq.setScene("scene_0");
         recommendReq.setItemIds(Arrays.asList("item_5267", "item_5268"));
@@ -137,14 +137,14 @@ public class RecClientTest {
         Assert.assertTrue(jsonRes.isStatus());
         Assert.assertEquals(jsonRes.getCode(), 200);
         recRes = jsonRes.getData();
-        Assert.assertTrue(recRes.getResults().size()>0);
+        Assert.assertTrue(recRes.getResults().size() > 0);
 
         recommendReq.setDebug(true);
         jsonRes = recClient.recommend(recommendReq);
         Assert.assertTrue(jsonRes.isStatus());
         Assert.assertEquals(jsonRes.getCode(), 200);
         recRes = jsonRes.getData();
-        Assert.assertTrue(recRes.getResults().size()>0);
+        Assert.assertTrue(recRes.getResults().size() > 0);
         Assert.assertNotNull(recRes.getDetailInfos());
         Assert.assertTrue(recClient.recommendItems(recommendReq).isStatus());
         JsonRes<RecommendRes<User>> userRes = recClient.recommendUsers(recommendReq);

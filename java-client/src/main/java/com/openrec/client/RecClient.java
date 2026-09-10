@@ -18,8 +18,7 @@ import java.lang.reflect.Type;
 
 public class RecClient {
 
-    private static final MediaType PROTOCOL_TYPE = MediaType.
-            parse("application/json; charset=utf-8");
+    private static final MediaType PROTOCOL_TYPE = MediaType.parse("application/json; charset=utf-8");
     private static final String API_PATH = "/api";
     private static final String RECOMMEND_PATH = API_PATH + "/recommend";
     private static final String RECOMMEND_ITEM_PATH = RECOMMEND_PATH + "/item";

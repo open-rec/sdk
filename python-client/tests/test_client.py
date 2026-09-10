@@ -68,15 +68,13 @@ class RecClientTest(unittest.TestCase):
             0.8,
         )
         self.assertEqual(
-            client.recommend_items(
-                RecommendRequest(debug=True)
-            ).data.detail_infos[0].pub_time,
+            client.recommend_items(RecommendRequest(debug=True))
+            .data.detail_infos[0]
+            .pub_time,
             "123",
         )
         self.assertEqual(
-            client.recommend_users(
-                RecommendRequest()
-            ).data.detail_infos[0].device_id,
+            client.recommend_users(RecommendRequest()).data.detail_infos[0].device_id,
             "d2",
         )
 
@@ -120,9 +118,9 @@ class RecClientTest(unittest.TestCase):
             def open(self, request, timeout=None):
                 raise HTTPError(request.full_url, 400, "bad", {}, None)
 
-        response = RecClient(
-            "http://openrec.test", opener=ErrorOpener()
-        ).push_items(ItemRequest())
+        response = RecClient("http://openrec.test", opener=ErrorOpener()).push_items(
+            ItemRequest()
+        )
         self.assertIsNone(response)
 
     def test_transport_and_json_errors_are_raised(self):
@@ -131,9 +129,9 @@ class RecClientTest(unittest.TestCase):
                 raise URLError("offline")
 
         with self.assertRaises(URLError):
-            RecClient(
-                "http://openrec.test", opener=TransportOpener()
-            ).push_items(ItemRequest())
+            RecClient("http://openrec.test", opener=TransportOpener()).push_items(
+                ItemRequest()
+            )
 
         class JSONOpener:
             def open(self, request, timeout=None):
