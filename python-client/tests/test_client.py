@@ -117,9 +117,18 @@ class RecClientTest(unittest.TestCase):
         opener = Opener()
         client = RecClient("http://openrec.test", opener=opener)
         client.push_items(ItemRequest(data=[Item(id="i1", subcategory="science")]))
-        client.push_events(EventRequest(data=[Event(
-            user_id="u1", item_id="i1", trace_id="request-1", event_id="action-1"
-        )]))
+        client.push_events(
+            EventRequest(
+                data=[
+                    Event(
+                        user_id="u1",
+                        item_id="i1",
+                        trace_id="request-1",
+                        event_id="action-1",
+                    )
+                ]
+            )
+        )
         item = json.loads(opener.requests[0][0].data)["body"]["data"][0]
         event = json.loads(opener.requests[1][0].data)["body"]["data"][0]
         self.assertEqual(item["subcategory"], "science")
