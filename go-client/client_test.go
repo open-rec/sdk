@@ -106,6 +106,52 @@ func TestExplicitRequestID(t *testing.T) {
 	}
 }
 
+func TestContentAndEventIdentityContract(t *testing.T) {
+	itemJSON, err := json.Marshal(Item{ID: "i1", Subcategory: "science"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var fields map[string]any
+	if err := json.Unmarshal(itemJSON, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if fields["subcategory"] != "science" {
+		t.Fatalf("item fields = %v", fields)
+	}
+	var item Item
+	if err := json.Unmarshal([]byte(`{"id":"i2","subcategory":"science"}`), &item); err != nil {
+		t.Fatal(err)
+	}
+	if item.Subcategory != "science" {
+		t.Fatalf("decoded item = %#v", item)
+	}
+	eventJSON, err := json.Marshal(Event{EventID: "action-1", TraceID: "request-1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fields = nil
+	if err := json.Unmarshal(eventJSON, &fields); err != nil {
+		t.Fatal(err)
+	}
+	if fields["eventId"] != "action-1" || fields["traceId"] != "request-1" {
+		t.Fatalf("event fields = %v", fields)
+	}
+	var event Event
+	if err := json.Unmarshal(eventJSON, &event); err != nil {
+		t.Fatal(err)
+	}
+	if event.EventID != "action-1" {
+		t.Fatalf("decoded event = %#v", event)
+	}
+	legacyJSON, err := json.Marshal(Event{UserID: "u1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(legacyJSON), "eventId") {
+		t.Fatalf("legacy event unexpectedly includes eventId: %s", legacyJSON)
+	}
+}
+
 func TestNon2xxReturnsNil(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Error(w, "no", http.StatusBadRequest) }))
 	defer server.Close()

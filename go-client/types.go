@@ -72,17 +72,18 @@ type RecommendResponse[T any] struct {
 }
 
 type Item struct {
-	ID         string `json:"id,omitempty"`
-	Weight     int    `json:"weight"`
-	Title      string `json:"title,omitempty"`
-	Category   string `json:"category,omitempty"`
-	Tags       string `json:"tags,omitempty"`
-	Scene      string `json:"scene,omitempty"`
-	PubTime    string `json:"pubTime,omitempty"`
-	ModifyTime string `json:"modifyTime,omitempty"`
-	ExpireTime string `json:"expireTime,omitempty"`
-	Status     int    `json:"status"`
-	ExtFields  any    `json:"extFields,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Weight      int    `json:"weight"`
+	Title       string `json:"title,omitempty"`
+	Category    string `json:"category,omitempty"`
+	Subcategory string `json:"subcategory,omitempty"`
+	Tags        string `json:"tags,omitempty"`
+	Scene       string `json:"scene,omitempty"`
+	PubTime     string `json:"pubTime,omitempty"`
+	ModifyTime  string `json:"modifyTime,omitempty"`
+	ExpireTime  string `json:"expireTime,omitempty"`
+	Status      int    `json:"status"`
+	ExtFields   any    `json:"extFields,omitempty"`
 }
 
 type User struct {
@@ -101,6 +102,7 @@ type User struct {
 }
 
 type Event struct {
+	EventID   string `json:"eventId,omitempty"`
 	UserID    string `json:"userId,omitempty"`
 	DeviceID  string `json:"deviceId,omitempty"`
 	ItemID    string `json:"itemId,omitempty"`

@@ -52,6 +52,7 @@ class Item:
     expire_time: Optional[str] = None
     status: int = 0
     ext_fields: Any = None
+    subcategory: Optional[str] = None
 
 
 @dataclass
@@ -82,6 +83,7 @@ class Event:
     time: Optional[str] = None
     is_login: bool = False
     ext_fields: Any = None
+    event_id: Optional[str] = None
 
 
 @dataclass
@@ -152,6 +154,7 @@ _JSON_NAMES = {
     "item_id": "itemId",
     "item_ids": "itemIds",
     "trace_id": "traceId",
+    "event_id": "eventId",
     "is_login": "isLogin",
     "ext_fields": "extFields",
     "pub_time": "pubTime",

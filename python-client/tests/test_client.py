@@ -34,7 +34,7 @@ class Opener:
         if request.full_url.endswith("/api/recommend/user"):
             details = [{"id": "u2", "deviceId": "d2"}]
         elif "/api/recommend" in request.full_url:
-            details = [{"id": "i2", "pubTime": "123"}]
+            details = [{"id": "i2", "pubTime": "123", "subcategory": "science"}]
         else:
             return Response(b'{"code":200,"status":true,"msg":"","data":"ok"}')
         body = {
@@ -112,6 +112,26 @@ class RecClientTest(unittest.TestCase):
         payload = json.loads(opener.requests[0][0].data)
         self.assertEqual(payload["requestId"], "trace-42")
         self.assertEqual(payload["body"]["cmd"], "UPDATE")
+
+    def test_content_and_event_identity_contract(self):
+        opener = Opener()
+        client = RecClient("http://openrec.test", opener=opener)
+        client.push_items(ItemRequest(data=[Item(id="i1", subcategory="science")]))
+        client.push_events(EventRequest(data=[Event(
+            user_id="u1", item_id="i1", trace_id="request-1", event_id="action-1"
+        )]))
+        item = json.loads(opener.requests[0][0].data)["body"]["data"][0]
+        event = json.loads(opener.requests[1][0].data)["body"]["data"][0]
+        self.assertEqual(item["subcategory"], "science")
+        self.assertEqual(event["eventId"], "action-1")
+        self.assertEqual(event["traceId"], "request-1")
+        self.assertNotIn("event_id", event)
+        result = client.recommend_items(RecommendRequest(debug=True))
+        self.assertEqual(result.data.detail_infos[0].subcategory, "science")
+
+        client.push_events(EventRequest(data=[Event(user_id="u1")]))
+        legacy = json.loads(opener.requests[-1][0].data)["body"]["data"][0]
+        self.assertNotIn("eventId", legacy)
 
     def test_non_2xx_returns_none(self):
         class ErrorOpener:
