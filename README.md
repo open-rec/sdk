@@ -211,3 +211,9 @@ python -m unittest discover -s tests -v
 
 CI checks formatting and runs tests without requiring a live rec-server. For an end-to-end check,
 start the standalone example and point a client at `http://localhost:13579`.
+
+Java HTTP failures throw `RecClientHttpException` with `getStatusCode()` and at most 1024 bytes
+of response detail from `getResponseBody()`. Response bodies are closed on both success and failure;
+non-2xx responses no longer return `null`. Transport failures retain their cause in a runtime
+exception. Business responses continue to use `JsonRes` unchanged. The client does not automatically
+retry pushes: a failed batch may already have delivered some messages.

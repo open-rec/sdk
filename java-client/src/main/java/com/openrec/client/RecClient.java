@@ -41,21 +41,8 @@ public class RecClient {
     }
 
     private <RES> JsonRes<RES> post(String path, Object data, Class clazz) {
-        RequestBody requestBody = RequestBody.create(PROTOCOL_TYPE, ToolUtils.objToJson(data));
-        Request request = new Request.Builder()
-                .url(endpoint + path)
-                .post(requestBody)
-                .build();
-        JsonRes<RES> jsonRes = null;
-        try {
-            Response strRes = client.newCall(request).execute();
-            if (strRes != null && strRes.isSuccessful()) {
-                jsonRes = ToolUtils.jsonToResponse(strRes.body().string(), clazz);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return jsonRes;
+        Type type = TypeToken.getParameterized(JsonRes.class, clazz).getType();
+        return post(path, data, type);
     }
 
     private <RES> JsonRes<RES> post(String path, Object data, Type type) {
@@ -64,16 +51,22 @@ public class RecClient {
                 .url(endpoint + path)
                 .post(requestBody)
                 .build();
-        JsonRes<RES> jsonRes = null;
-        try {
-            Response strRes = client.newCall(request).execute();
-            if (strRes != null && strRes.isSuccessful()) {
-                jsonRes = ToolUtils.jsonToResponse(strRes.body().string(), type);
+        try (Response strRes = client.newCall(request).execute()) {
+            if (!strRes.isSuccessful()) {
+                String detail = strRes.body() == null ? "" : strRes.peekBody(1024).string();
+                throw new RecClientHttpException(strRes.code(), detail);
             }
+            if (strRes.body() == null) {
+                throw new IOException("OpenRec returned an empty response body");
+            }
+            JsonRes<RES> result = ToolUtils.jsonToResponse(strRes.body().string(), type);
+            if (result == null) {
+                throw new IOException("OpenRec returned a null response");
+            }
+            return result;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("OpenRec request failed: " + path, e);
         }
-        return jsonRes;
     }
 
     public JsonRes<String> pushItems(ItemReq itemReq) {
