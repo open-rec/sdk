@@ -77,6 +77,11 @@ class Event:
     device_id: Optional[str] = None
     item_id: Optional[str] = None
     trace_id: Optional[str] = None
+    session_id: Optional[str] = None
+    request_id: Optional[str] = None
+    role: Optional[str] = None
+    position: int = 0
+    content: Optional[str] = None
     scene: Optional[str] = None
     type: Optional[str] = None
     value: Optional[str] = None
@@ -110,6 +115,7 @@ class RecommendRequest:
     size: int = 0
     user_id: Optional[str] = None
     device_id: Optional[str] = None
+    session_id: Optional[str] = None
     item_ids: Optional[list[str]] = None
     type: Optional[str] = None
     debug: bool = False
@@ -154,6 +160,7 @@ _JSON_NAMES = {
     "item_id": "itemId",
     "item_ids": "itemIds",
     "trace_id": "traceId",
+    "session_id": "sessionId",
     "event_id": "eventId",
     "is_login": "isLogin",
     "ext_fields": "extFields",

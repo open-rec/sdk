@@ -125,7 +125,9 @@ func TestContentAndEventIdentityContract(t *testing.T) {
 	if item.Subcategory != "science" {
 		t.Fatalf("decoded item = %#v", item)
 	}
-	eventJSON, err := json.Marshal(Event{EventID: "action-1", TraceID: "request-1"})
+	eventJSON, err := json.Marshal(Event{EventID: "action-1", TraceID: "trace-1",
+		SessionID: "session-1", RequestID: "request-1", Role: "candidate",
+		Position: 3, Content: "search text"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -133,7 +135,10 @@ func TestContentAndEventIdentityContract(t *testing.T) {
 	if err := json.Unmarshal(eventJSON, &fields); err != nil {
 		t.Fatal(err)
 	}
-	if fields["eventId"] != "action-1" || fields["traceId"] != "request-1" {
+	if fields["eventId"] != "action-1" || fields["traceId"] != "trace-1" ||
+		fields["sessionId"] != "session-1" || fields["requestId"] != "request-1" ||
+		fields["role"] != "candidate" || fields["position"] != float64(3) ||
+		fields["content"] != "search text" {
 		t.Fatalf("event fields = %v", fields)
 	}
 	var event Event

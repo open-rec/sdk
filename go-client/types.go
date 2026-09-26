@@ -59,6 +59,7 @@ type RecommendRequest struct {
 	Size       int            `json:"size"`
 	UserID     string         `json:"userId,omitempty"`
 	DeviceID   string         `json:"deviceId,omitempty"`
+	SessionID  string         `json:"sessionId,omitempty"`
 	ItemIDs    []string       `json:"itemIds,omitempty"`
 	Type       string         `json:"type,omitempty"`
 	Debug      bool           `json:"debug"`
@@ -107,6 +108,11 @@ type Event struct {
 	DeviceID  string `json:"deviceId,omitempty"`
 	ItemID    string `json:"itemId,omitempty"`
 	TraceID   string `json:"traceId,omitempty"`
+	SessionID string `json:"sessionId,omitempty"`
+	RequestID string `json:"requestId,omitempty"`
+	Role      string `json:"role,omitempty"`
+	Position  int    `json:"position"`
+	Content   string `json:"content,omitempty"`
 	Scene     string `json:"scene,omitempty"`
 	Type      string `json:"type,omitempty"`
 	Value     string `json:"value,omitempty"`

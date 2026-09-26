@@ -125,6 +125,11 @@ class RecClientTest(unittest.TestCase):
                         item_id="i1",
                         trace_id="request-1",
                         event_id="action-1",
+                        session_id="session-1",
+                        request_id="request-1",
+                        role="candidate",
+                        position=3,
+                        content="search text",
                     )
                 ]
             )
@@ -134,6 +139,11 @@ class RecClientTest(unittest.TestCase):
         self.assertEqual(item["subcategory"], "science")
         self.assertEqual(event["eventId"], "action-1")
         self.assertEqual(event["traceId"], "request-1")
+        self.assertEqual(event["sessionId"], "session-1")
+        self.assertEqual(event["requestId"], "request-1")
+        self.assertEqual(event["role"], "candidate")
+        self.assertEqual(event["position"], 3)
+        self.assertEqual(event["content"], "search text")
         self.assertNotIn("event_id", event)
         result = client.recommend_items(RecommendRequest(debug=True))
         self.assertEqual(result.data.detail_infos[0].subcategory, "science")
