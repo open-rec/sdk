@@ -9,8 +9,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
         <log4j.version>2.17.0</log4j.version>
         <slf4j.version>1.7.25</slf4j.version>
         <junit.version>4.12</junit.version>
@@ -18,8 +17,7 @@
         <http.client.version>4.8.0</http.client.version>
         <gson.version>2.13.2</gson.version>
         <rec.proto>1.0-SNAPSHOT</rec.proto>
-        <!-- Last Spotless Maven line that remains compatible with the Java 8 build runtime. -->
-        <spotless.version>2.22.8</spotless.version>
+        <spotless.version>3.10.3</spotless.version>
     </properties>
 
     <dependencies>
@@ -77,7 +75,7 @@
                 <configuration>
                     <java>
                         <eclipse>
-                            <version>4.17.0</version>
+                            <version>4.37</version>
                             <file>${project.basedir}/config/eclipse-java-alibaba-style.xml</file>
                         </eclipse>
                         <removeUnusedImports/>
@@ -98,10 +96,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.14.1</version>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
+                    <release>${maven.compiler.release}</release>
                 </configuration>
             </plugin>
             <plugin>

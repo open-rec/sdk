@@ -1,7 +1,7 @@
 # OpenRec SDK
 
 [![CI](https://github.com/open-rec/sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/open-rec/sdk/actions/workflows/ci.yml)
-![Java compatibility](https://img.shields.io/badge/Java_compatibility-8%2B-ED8B00?logo=openjdk&logoColor=white)
+![JDK](https://img.shields.io/badge/JDK-21-ED8B00?logo=openjdk&logoColor=white)
 ![Go](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)
 
@@ -11,7 +11,7 @@ typed user recommendations.
 
 | Client | Runtime | Package |
 |---|---|---|
-| [java-client](java-client) | Java 8+ (including Java 21) | `com.openrec:rec-client:1.0-SNAPSHOT` |
+| [java-client](java-client) | JDK 21 | `com.openrec:rec-client:1.0-SNAPSHOT` |
 | [go-client](go-client) | Go 1.20+ | `github.com/open-rec/sdk/go-client` |
 | [python-client](python-client) | Python 3.9+ | distribution `openrec-client`, import `openrec` |
 
@@ -36,9 +36,8 @@ a trace ID explicitly.
 
 ## Java client
 
-The SDK retains Java 8 bytecode compatibility for existing clients. It can also run on Java 21,
-which is used by rec-server and the example Web Demo; the badge describes the minimum client
-runtime, not the server JDK.
+The Java SDK requires JDK 21 for building and Java 21 or newer at runtime. Its `rec-proto`
+dependency also targets Java 21. Older Java runtimes are no longer supported.
 
 `java-client` depends on `rec-proto` from the `rec-server` repository. Install that artifact before
 building the client:
@@ -193,7 +192,7 @@ HTTP client where available.
 Run commands from the client directory they belong to:
 
 ```shell
-# Java: Alibaba-style Eclipse formatter through Java 8-compatible Spotless
+# Java: Alibaba-style Eclipse formatter through Spotless on JDK 21
 cd java-client
 mvn spotless:apply
 mvn spotless:check
