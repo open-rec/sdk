@@ -1,11 +1,10 @@
 package com.openrec.client.utils;
 
 import com.google.gson.Gson;
-import com.google.gson.internal.$Gson$Preconditions;
-import com.google.gson.internal.$Gson$Types;
 import com.openrec.proto.JsonResType;
 
 import java.lang.reflect.Type;
+import java.util.Objects;
 
 public class ToolUtils {
 
@@ -28,10 +27,10 @@ public class ToolUtils {
     }
 
     public static <T> T jsonToResponse(String json, Class clazz) {
-        return jsonToObj(json, $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(new JsonResType(clazz))));
+        return jsonToObj(json, new JsonResType(Objects.requireNonNull(clazz)));
     }
 
     public static <T> T jsonToResponse(String json, Type type) {
-        return jsonToObj(json, $Gson$Types.canonicalize($Gson$Preconditions.checkNotNull(type)));
+        return jsonToObj(json, Objects.requireNonNull(type));
     }
 }
