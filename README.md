@@ -1,7 +1,7 @@
 # OpenRec SDK
 
 [![CI](https://github.com/open-rec/sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/open-rec/sdk/actions/workflows/ci.yml)
-![Java](https://img.shields.io/badge/Java-8-ED8B00?logo=openjdk&logoColor=white)
+![Java compatibility](https://img.shields.io/badge/Java_compatibility-8%2B-ED8B00?logo=openjdk&logoColor=white)
 ![Go](https://img.shields.io/badge/Go-1.20+-00ADD8?logo=go&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)
 
@@ -11,7 +11,7 @@ typed user recommendations.
 
 | Client | Runtime | Package |
 |---|---|---|
-| [java-client](java-client) | Java 8 | `com.openrec:rec-client:1.0-SNAPSHOT` |
+| [java-client](java-client) | Java 8+ (including Java 21) | `com.openrec:rec-client:1.0-SNAPSHOT` |
 | [go-client](go-client) | Go 1.20+ | `github.com/open-rec/sdk/go-client` |
 | [python-client](python-client) | Python 3.9+ | distribution `openrec-client`, import `openrec` |
 
@@ -35,6 +35,10 @@ Every convenience method generates a request ID. Java also accepts `JsonReq<T>` 
 a trace ID explicitly.
 
 ## Java client
+
+The SDK retains Java 8 bytecode compatibility for existing clients. It can also run on Java 21,
+which is used by rec-server and the example Web Demo; the badge describes the minimum client
+runtime, not the server JDK.
 
 `java-client` depends on `rec-proto` from the `rec-server` repository. Install that artifact before
 building the client:
