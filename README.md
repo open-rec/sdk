@@ -87,7 +87,12 @@ if (recRes != null && recRes.getCode() == ProtoCode.SUCCESS) {
 
 Use `pushUsers` and `pushEvents` with `UserReq` and `EventReq`. Use `recommendUsers` when the target
 is a user. Setting `debug=true` returns full entities in `detailInfos`, at the cost of additional
-serving lookups. `itemIds` can provide explicit item triggers.
+serving lookups. With the matching Java 21 `rec-proto`, it also exposes
+`getRecallDiagnostics()` on `RecommendRes`: node, channel, status and candidate count before
+filtering/ranking/truncation. Final-result `recallScores` describes only the selected items;
+it cannot establish whether every recall channel supplied candidates. The Go and Python typed
+recommendation responses currently omit these additional diagnostics; use the HTTP JSON response
+when inspecting them from those languages. `itemIds` can provide explicit item triggers.
 
 ## Go client
 
@@ -177,12 +182,20 @@ runtime has no third-party dependencies; a custom `urllib` opener may be passed 
 
 ## Error handling
 
-All clients return a null/nil/`None` response for non-2xx HTTP status codes. Check both the response
-and its protocol `code` before reading `data`.
+Non-2xx HTTP handling differs by client:
 
-- Java wraps transport failures in `RuntimeException`.
-- Go returns transport and JSON failures as `error`.
-- Python raises transport and JSON decoding exceptions.
+- Java throws `RecClientHttpException`, exposing `getStatusCode()` and at most 1024 bytes from
+  `getResponseBody()`. Response bodies are closed on success and failure; HTTP errors do not
+  return `null`. Transport failures retain their cause in a `RuntimeException`.
+- Go returns a nil response for non-2xx status; transport and JSON failures return an `error`.
+- Python returns `None` for non-2xx status; transport and JSON decoding failures raise exceptions.
+
+For successful HTTP responses, check the protocol `code` and `status` before reading `data`.
+rec-server returns HTTP 503 while the selected recommendation graph is unready. A running process
+or successful `/health` response does not imply recommendation availability: deployment automation
+must configure representative warmup samples and wait for `/ready`. Push/query APIs remain usable
+while recommendation traffic is gated. See the server's
+[readiness guide](https://github.com/open-rec/rec-server#recommendation-readiness).
 
 There is no built-in retry policy. Configure retries and timeouts through the language-specific
 HTTP client where available.
@@ -215,8 +228,4 @@ python -m unittest discover -s tests -v
 CI checks formatting and runs tests without requiring a live rec-server. For an end-to-end check,
 start the standalone example and point a client at `http://localhost:13579`.
 
-Java HTTP failures throw `RecClientHttpException` with `getStatusCode()` and at most 1024 bytes
-of response detail from `getResponseBody()`. Response bodies are closed on both success and failure;
-non-2xx responses no longer return `null`. Transport failures retain their cause in a runtime
-exception. Business responses continue to use `JsonRes` unchanged. The client does not automatically
-retry pushes: a failed batch may already have delivered some messages.
+Push retries require care: a failed batch may already have delivered some messages.
