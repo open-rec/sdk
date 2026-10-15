@@ -30,7 +30,13 @@ typed user recommendations.
 
 New integrations should use the typed item or user recommendation methods. The legacy endpoint is
 kept for compatibility. Push requests default to `INSERT`; `INSERT` and `UPDATE` are upserts.
-User/item `DELETE` removes entities by ID. Events are append-only and do not support deletion.
+User/item `DELETE` removes entities by ID. Event deletion differs by deployment mode:
+standalone accepts `EventRequest` / `EventReq` with `cmd=DELETE` and removes the specified
+item IDs from the user/scene/event-type Redis sorted set. This is serving-state cleanup, not
+deleting individual historical events by event ID, and it does not clear an entire event set.
+Cluster rejects event `DELETE` through the public push API. Streaming support for historical
+event tombstones does not make that public operation available. The SDK enum can express
+`DELETE`; callers must respect the selected mode and check the response.
 
 Every convenience method generates a request ID. Java also accepts `JsonReq<T>` overloads, Go has
 `WithRequest` variants, and Python has `_request` variants or a `request_id=` argument for supplying
