@@ -35,8 +35,8 @@ public class RecClient {
         this(endpoint, new OkHttpClient());
     }
 
-    RecClient(String endpoint, OkHttpClient client) {
-        this.endpoint = endpoint;
+    public RecClient(String endpoint, OkHttpClient client) {
+        this.endpoint = endpoint.replaceAll("/+$", "");
         this.client = client;
     }
 

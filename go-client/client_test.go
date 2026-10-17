@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -157,12 +158,40 @@ func TestContentAndEventIdentityContract(t *testing.T) {
 	}
 }
 
-func TestNon2xxReturnsNil(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Error(w, "no", http.StatusBadRequest) }))
+func TestHTTPError(t *testing.T) {
+	for _, status := range []int{400, 429, 503} {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(status)
+			_, _ = io.WriteString(w, strings.Repeat("x", 4096))
+		}))
+		response, err := NewClient(server.URL).PushItems(context.Background(), ItemRequest{})
+		server.Close()
+		var httpError *HTTPError
+		if response != nil || !errors.As(err, &httpError) || httpError.StatusCode != status || len(httpError.ResponseBody) != 1024 {
+			t.Fatalf("response = %#v, error = %v", response, err)
+		}
+	}
+}
+
+func TestSharedRecommendContract(t *testing.T) {
+	payload, err := os.ReadFile("../testdata/recommend.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write(payload) }))
 	defer server.Close()
-	response, err := NewClient(server.URL).PushItems(context.Background(), ItemRequest{})
-	if err != nil || response != nil {
-		t.Fatalf("response = %#v, error = %v", response, err)
+	client := NewClient(server.URL)
+	response, err := client.RecommendItems(context.Background(), RecommendRequest{Debug: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := response.Data
+	if data.RecallDiagnostics[0].CandidateCount != 12 || *data.Results[0].RecallFusionScore != 0.9 || data.Results[0].RankScore != nil || data.DetailInfos[0].ID != "i1" {
+		t.Fatalf("data = %#v", data)
+	}
+	users, err := client.RecommendUsers(context.Background(), RecommendRequest{Debug: true})
+	if err != nil || users.Data.RecallDiagnostics[0].CandidateCount != 12 {
+		t.Fatalf("users = %#v, error = %v", users, err)
 	}
 }
 
@@ -184,3 +213,19 @@ func TestDecodeAndTransportErrors(t *testing.T) {
 type roundTripFunc func(*http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) { return f(request) }
+
+func TestNullResponseAndBusinessErrors(t *testing.T) {
+	for _, payload := range []string{"null", `{"code":400,"status":false,"msg":"bad","data":null}`} {
+		client := NewClientWithHTTPClient("http://openrec.test", &http.Client{Transport: roundTripFunc(func(*http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(payload))}, nil
+		})})
+		response, err := client.RecommendItems(context.Background(), RecommendRequest{})
+		if payload == "null" {
+			if err == nil || response != nil {
+				t.Fatal("null response must fail")
+			}
+		} else if err != nil || response.Code != 400 || response.Status || response.Data != nil {
+			t.Fatalf("response = %#v, error = %v", response, err)
+		}
+	}
+}

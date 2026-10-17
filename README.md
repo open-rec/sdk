@@ -57,6 +57,15 @@ cd ../sdk/java-client
 mvn clean install
 ```
 
+For SDK-only development and CI, `java-client/build-support/rec-proto-pom.xml` builds the
+protocol directly without loading the rec-server parent POM. With sibling `sdk/` and
+`rec-server/` checkouts, run from the SDK root using JDK 21:
+
+```shell
+mvn -f java-client/build-support/rec-proto-pom.xml install -DskipTests
+mvn -f java-client/pom.xml test
+```
+
 Add the installed client to a Maven project:
 
 ```xml
@@ -98,9 +107,9 @@ is a user. Setting `debug=true` returns full entities in `detailInfos`, at the c
 serving lookups. With the matching Java 21 `rec-proto`, it also exposes
 `getRecallDiagnostics()` on `RecommendRes`: node, channel, status and candidate count before
 filtering/ranking/truncation. Final-result `recallScores` describes only the selected items;
-it cannot establish whether every recall channel supplied candidates. The Go and Python typed
-recommendation responses currently omit these additional diagnostics; use the HTTP JSON response
-when inspecting them from those languages. `itemIds` can provide explicit item triggers.
+it cannot establish whether every recall channel supplied candidates. Go exposes the same
+diagnostics as `RecallDiagnostics`; Python exposes them as
+`recall_diagnostics`. `itemIds` can provide explicit item triggers.
 
 ## Go client
 
@@ -190,13 +199,15 @@ runtime has no third-party dependencies; a custom `urllib` opener may be passed 
 
 ## Error handling
 
-Non-2xx HTTP handling differs by client:
+All clients report non-2xx HTTP responses as errors and preserve at most 1024 bytes of response detail:
 
 - Java throws `RecClientHttpException`, exposing `getStatusCode()` and at most 1024 bytes from
   `getResponseBody()`. Response bodies are closed on success and failure; HTTP errors do not
   return `null`. Transport failures retain their cause in a `RuntimeException`.
-- Go returns a nil response for non-2xx status; transport and JSON failures return an `error`.
-- Python returns `None` for non-2xx status; transport and JSON decoding failures raise exceptions.
+- Go returns a nil response and an `*HTTPError` with `StatusCode` and `ResponseBody`;
+  use `errors.As` to inspect it. Transport and JSON failures also return an `error`.
+- Python raises `RecClientHttpException` with `status_code` and `response_body`.
+  Transport and JSON decoding failures also raise exceptions.
 
 For successful HTTP responses, check the protocol `code` and `status` before reading `data`.
 rec-server returns HTTP 503 while the selected recommendation graph is unready. A running process
@@ -208,7 +219,22 @@ while recommendation traffic is gated. See the server's
 There is no built-in retry policy. Configure retries and timeouts through the language-specific
 HTTP client where available.
 
+Java accepts a public `RecClient(String endpoint, OkHttpClient client)` constructor for custom
+HTTP timeouts, interceptors, and transports. All clients normalize trailing slashes in endpoints.
+
+**Migration:** Go callers that previously checked only for a nil response must now handle the
+returned HTTP error. Python callers that previously checked for `None` must catch
+`RecClientHttpException`. Business failures inside HTTP 2xx responses still use `code`/`status`.
+
 ## Development
+
+Java is the reference SDK contract. All three clients consume `testdata/recommend.json` in their
+tests to verify diagnostics, nullable scores, typed details, and tolerance of unknown fields.
+
+Formatting is enforced in CI: Java uses Spotless with the Alibaba Eclipse profile; Python uses
+Ruff with PEP 8 E/W checks, four-space indentation and a 79-character line limit; Go uses standard
+`gofmt` and `go vet`. `.editorconfig` supplies matching editor defaults. With Java 21, Maven,
+Go and Ruff on PATH, `make format`, `make format-check`, and `make test` run the common tasks.
 
 Run commands from the client directory they belong to:
 

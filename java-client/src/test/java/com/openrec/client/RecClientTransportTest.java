@@ -14,6 +14,8 @@ import okio.Okio;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.Assert.*;
@@ -68,6 +70,19 @@ public class RecClientTransportTest {
         }
     }
 
+    @Test
+    public void sharedRecommendationContract() throws IOException {
+        String payload = Files.readString(Path.of("../testdata/recommend.json"));
+        RecClient client = client(200, payload, new AtomicBoolean());
+        var data = client.recommendItems(new RecommendReq()).getData();
+        assertEquals(12, data.getRecallDiagnostics().get(0).getCandidateCount());
+        assertEquals(0.9, data.getResults().get(0).getRecallFusionScore(), 0.0);
+        assertNull(data.getResults().get(0).getRankScore());
+        assertEquals("i1", data.getDetailInfos().get(0).getId());
+        assertEquals(12, client(200, payload, new AtomicBoolean()).recommendUsers(new RecommendReq()).getData()
+                .getRecallDiagnostics().get(0).getCandidateCount());
+    }
+
     private RecClient client(int status, String text, AtomicBoolean closed) {
         BufferedSource source = Okio.buffer(new ForwardingSource(new Buffer().writeUtf8(text)) {
             @Override
@@ -90,9 +105,12 @@ public class RecClientTransportTest {
                 return source;
             }
         };
-        OkHttpClient http = new OkHttpClient.Builder().addInterceptor(chain -> new Response.Builder()
-                .request(chain.request()).protocol(Protocol.HTTP_1_1).code(status)
-                .message("test").body(body).build()).build();
-        return new RecClient("http://openrec.test", http);
+        OkHttpClient http = new OkHttpClient.Builder().addInterceptor(chain -> {
+            assertFalse(chain.request().url().encodedPath().startsWith("//"));
+            return new Response.Builder()
+                    .request(chain.request()).protocol(Protocol.HTTP_1_1).code(status)
+                    .message("test").body(body).build();
+        }).build();
+        return new RecClient("http://openrec.test/", http);
     }
 }

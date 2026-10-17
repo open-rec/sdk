@@ -135,9 +135,18 @@ class ScoreResult:
 
 
 @dataclass
+class RecallDiagnostic:
+    node: Optional[str] = None
+    channel: Optional[str] = None
+    status: Optional[str] = None
+    candidate_count: int = 0
+
+
+@dataclass
 class RecommendResponse(Generic[T]):
     results: list[ScoreResult] = field(default_factory=list)
     detail_infos: Optional[list[T]] = None
+    recall_diagnostics: Optional[list[RecallDiagnostic]] = None
 
 
 @dataclass
@@ -171,6 +180,8 @@ _JSON_NAMES = {
     "login_time": "loginTime",
     "target_type": "targetType",
     "detail_infos": "detailInfos",
+    "recall_diagnostics": "recallDiagnostics",
+    "candidate_count": "candidateCount",
     "recall_from": "recallFrom",
     "recall_score": "recallScore",
     "recall_fusion_score": "recallFusionScore",
@@ -184,7 +195,9 @@ def to_json_dict(value: Any) -> Any:
         return value.value
     if is_dataclass(value):
         return {
-            _JSON_NAMES.get(model_field.name, model_field.name): to_json_dict(item)
+            _JSON_NAMES.get(model_field.name, model_field.name): to_json_dict(
+                item
+            )
             for model_field in fields(value)
             for item in [getattr(value, model_field.name)]
             if item is not None

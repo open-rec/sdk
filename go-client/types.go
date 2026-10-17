@@ -67,9 +67,17 @@ type RecommendRequest struct {
 	Params     map[string]any `json:"params,omitempty"`
 }
 
+type RecallDiagnostic struct {
+	Node           string `json:"node"`
+	Channel        string `json:"channel"`
+	Status         string `json:"status"`
+	CandidateCount int    `json:"candidateCount"`
+}
+
 type RecommendResponse[T any] struct {
-	Results     []ScoreResult `json:"results"`
-	DetailInfos []T           `json:"detailInfos"`
+	RecallDiagnostics []RecallDiagnostic `json:"recallDiagnostics"`
+	Results           []ScoreResult      `json:"results"`
+	DetailInfos       []T                `json:"detailInfos"`
 }
 
 type Item struct {

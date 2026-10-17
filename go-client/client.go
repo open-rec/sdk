@@ -22,6 +22,16 @@ const (
 	pushEventPath     = "/api/push/event"
 )
 
+// HTTPError reports a non-2xx response with at most 1024 bytes of detail.
+type HTTPError struct {
+	StatusCode   int
+	ResponseBody string
+}
+
+func (e *HTTPError) Error() string {
+	return fmt.Sprintf("OpenRec HTTP %d: %s", e.StatusCode, e.ResponseBody)
+}
+
 // Client is safe for concurrent use when its HTTP client is safe for concurrent use.
 type Client struct {
 	endpoint   string
@@ -118,15 +128,21 @@ func post[T any](ctx context.Context, client *Client, path string, payload any) 
 	}
 	defer response.Body.Close()
 	if response.StatusCode < http.StatusOK || response.StatusCode >= http.StatusMultipleChoices {
-		_, _ = io.Copy(io.Discard, response.Body)
-		return nil, nil
+		detail, err := io.ReadAll(io.LimitReader(response.Body, 1024))
+		if err != nil {
+			return nil, fmt.Errorf("openrec: read HTTP %d response: %w", response.StatusCode, err)
+		}
+		return nil, &HTTPError{StatusCode: response.StatusCode, ResponseBody: string(detail)}
 	}
 
-	var result JSONResponse[T]
+	var result *JSONResponse[T]
 	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
 		return nil, fmt.Errorf("openrec: decode response: %w", err)
 	}
-	return &result, nil
+	if result == nil {
+		return nil, errors.New("openrec: null response")
+	}
+	return result, nil
 }
 
 func defaultPushCmd(cmd PushCmd) PushCmd {

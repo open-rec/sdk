@@ -76,8 +76,12 @@ jobs:
       - name: Install protocol artifact
         run: >-
           mvn --batch-mode --no-transfer-progress
-          -f sdk/java-client/ci/rec-proto-pom.xml
+          -f sdk/java-client/build-support/rec-proto-pom.xml
           install -DskipTests
       - name: Run Java client tests
         working-directory: sdk/java-client
         run: mvn --batch-mode --no-transfer-progress clean test
+      - name: Verify Java 21 bytecode
+        working-directory: sdk/java-client
+        run: |
+          javap -verbose target/classes/com/openrec/client/RecClient.class | grep -q 'major version: 65'

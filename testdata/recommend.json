@@ -1,0 +1,34 @@
+{
+  "code": 200,
+  "status": true,
+  "msg": "",
+  "data": {
+    "results": [
+      {
+        "id": "i1",
+        "score": 1.5,
+        "recallScore": 0.8,
+        "recallFusionScore": 0.9,
+        "rankScore": null,
+        "recallScores": {
+          "hot": 0.8
+        },
+        "futureField": true
+      }
+    ],
+    "detailInfos": [
+      {
+        "id": "i1",
+        "futureField": true
+      }
+    ],
+    "recallDiagnostics": [
+      {
+        "node": "recall",
+        "channel": "hot",
+        "status": "success",
+        "candidateCount": 12
+      }
+    ]
+  }
+}

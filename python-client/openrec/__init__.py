@@ -1,4 +1,4 @@
-from .client import RecClient
+from .client import RecClient, RecClientHttpException
 from .models import (
     CODE_BAD_REQUEST,
     CODE_ERROR,
@@ -16,6 +16,7 @@ from .models import (
     JsonRequest,
     JsonResponse,
     PushCmd,
+    RecallDiagnostic,
     RecommendRequest,
     RecommendResponse,
     ScoreResult,
@@ -42,6 +43,8 @@ __all__ = [
     "JsonResponse",
     "PushCmd",
     "RecClient",
+    "RecClientHttpException",
+    "RecallDiagnostic",
     "RecommendRequest",
     "RecommendResponse",
     "ScoreResult",

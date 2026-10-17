@@ -1,6 +1,7 @@
 import io
 import json
 import unittest
+from pathlib import Path
 from urllib.error import HTTPError, URLError
 
 from openrec import (
@@ -11,6 +12,7 @@ from openrec import (
     JsonRequest,
     PushCmd,
     RecClient,
+    RecClientHttpException,
     RecommendRequest,
     User,
     UserRequest,
@@ -34,7 +36,9 @@ class Opener:
         if request.full_url.endswith("/api/recommend/user"):
             details = [{"id": "u2", "deviceId": "d2"}]
         elif "/api/recommend" in request.full_url:
-            details = [{"id": "i2", "pubTime": "123", "subcategory": "science"}]
+            details = [
+                {"id": "i2", "pubTime": "123", "subcategory": "science"}
+            ]
         else:
             return Response(b'{"code":200,"status":true,"msg":"","data":"ok"}')
         body = {
@@ -56,15 +60,21 @@ class RecClientTest(unittest.TestCase):
 
         self.assertTrue(
             client.push_items(
-                ItemRequest(data=[Item(id="i1", pub_time="123", ext_fields={"x": 1})])
+                ItemRequest(
+                    data=[Item(id="i1", pub_time="123", ext_fields={"x": 1})]
+                )
             ).status
         )
-        self.assertTrue(client.push_users(UserRequest(data=[User(id="u1")])).status)
+        self.assertTrue(
+            client.push_users(UserRequest(data=[User(id="u1")])).status
+        )
         self.assertTrue(
             client.push_events(EventRequest(data=[Event(user_id="u1")])).status
         )
         self.assertEqual(
-            client.recommend(RecommendRequest(scene="s")).data.results[0].rank_score,
+            client.recommend(RecommendRequest(scene="s"))
+            .data.results[0]
+            .rank_score,
             0.8,
         )
         self.assertEqual(
@@ -74,7 +84,9 @@ class RecClientTest(unittest.TestCase):
             "123",
         )
         self.assertEqual(
-            client.recommend_users(RecommendRequest()).data.detail_infos[0].device_id,
+            client.recommend_users(RecommendRequest())
+            .data.detail_infos[0]
+            .device_id,
             "d2",
         )
 
@@ -116,7 +128,9 @@ class RecClientTest(unittest.TestCase):
     def test_content_and_event_identity_contract(self):
         opener = Opener()
         client = RecClient("http://openrec.test", opener=opener)
-        client.push_items(ItemRequest(data=[Item(id="i1", subcategory="science")]))
+        client.push_items(
+            ItemRequest(data=[Item(id="i1", subcategory="science")])
+        )
         client.push_events(
             EventRequest(
                 data=[
@@ -152,15 +166,68 @@ class RecClientTest(unittest.TestCase):
         legacy = json.loads(opener.requests[-1][0].data)["body"]["data"][0]
         self.assertNotIn("eventId", legacy)
 
-    def test_non_2xx_returns_none(self):
-        class ErrorOpener:
-            def open(self, request, timeout=None):
-                raise HTTPError(request.full_url, 400, "bad", {}, None)
+    def test_http_errors_preserve_status_and_close_body(self):
+        for status in (400, 429, 503):
+            body = Response(b"x" * 4096)
 
-        response = RecClient("http://openrec.test", opener=ErrorOpener()).push_items(
-            ItemRequest()
+            class ErrorOpener:
+                def open(
+                    self, request, timeout=None, status=status, body=body
+                ):
+                    raise HTTPError(request.full_url, status, "bad", {}, body)
+
+            with self.assertRaises(RecClientHttpException) as caught:
+                RecClient(
+                    "http://openrec.test", opener=ErrorOpener()
+                ).push_items(ItemRequest())
+            self.assertEqual(caught.exception.status_code, status)
+            self.assertEqual(caught.exception.response_body, "x" * 1024)
+            self.assertTrue(body.closed)
+
+    def test_shared_recommend_contract(self):
+        payload = (
+            Path(__file__).parents[2] / "testdata/recommend.json"
+        ).read_bytes()
+
+        class FixtureOpener:
+            def open(self, request, timeout=None):
+                return Response(payload)
+
+        client = RecClient("http://openrec.test", opener=FixtureOpener())
+        for method in (
+            client.recommend,
+            client.recommend_items,
+            client.recommend_users,
+        ):
+            result = method(RecommendRequest(debug=True)).data
+            self.assertEqual(result.recall_diagnostics[0].candidate_count, 12)
+            self.assertEqual(result.results[0].recall_fusion_score, 0.9)
+            self.assertIsNone(result.results[0].rank_score)
+            self.assertEqual(result.detail_infos[0].id, "i1")
+
+    def test_null_response_and_business_errors(self):
+        class FixtureOpener:
+            def __init__(self, payload):
+                self.payload = payload
+
+            def open(self, request, timeout=None):
+                return Response(self.payload)
+
+        client = RecClient(
+            "http://openrec.test", opener=FixtureOpener(b"null")
         )
-        self.assertIsNone(response)
+        with self.assertRaises(ValueError):
+            client.recommend_items(RecommendRequest())
+        client = RecClient(
+            "http://openrec.test",
+            opener=FixtureOpener(
+                b'{"code":400,"status":false,"msg":"bad","data":null}'
+            ),
+        )
+        response = client.recommend_items(RecommendRequest())
+        self.assertEqual(response.code, 400)
+        self.assertFalse(response.status)
+        self.assertIsNone(response.data)
 
     def test_transport_and_json_errors_are_raised(self):
         class TransportOpener:
@@ -168,9 +235,9 @@ class RecClientTest(unittest.TestCase):
                 raise URLError("offline")
 
         with self.assertRaises(URLError):
-            RecClient("http://openrec.test", opener=TransportOpener()).push_items(
-                ItemRequest()
-            )
+            RecClient(
+                "http://openrec.test", opener=TransportOpener()
+            ).push_items(ItemRequest())
 
         class JSONOpener:
             def open(self, request, timeout=None):

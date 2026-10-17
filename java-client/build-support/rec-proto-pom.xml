@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!--
-        SDK CI compiles the checked-out rec-server protocol sources without loading the
+        SDK builds compile the checked-out rec-server protocol sources without loading the
         rec-server parent POM. This keeps the client contract test independent of server-only
         dependency management while preserving the real com.openrec:rec-proto coordinates.
     -->
