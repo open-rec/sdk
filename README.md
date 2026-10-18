@@ -1,6 +1,6 @@
 # OpenRec SDK
 
-[Release v0.1.0](RELEASE_NOTES.md) · [Changelog](CHANGELOG.md)
+[Release v0.2.0](RELEASE_NOTES.md) · [Changelog](CHANGELOG.md)
 
 [![CI](https://github.com/open-rec/sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/open-rec/sdk/actions/workflows/ci.yml)
 ![JDK](https://img.shields.io/badge/JDK-21-ED8B00?logo=openjdk&logoColor=white)
@@ -13,7 +13,7 @@ typed user recommendations.
 
 | Client | Runtime | Package |
 |---|---|---|
-| [java-client](java-client) | JDK 21 | `com.openrec:rec-client:0.1.0` |
+| [java-client](java-client) | JDK 21 | `com.openrec:rec-client:0.2.0` |
 | [go-client](go-client) | Go 1.20+ | `github.com/open-rec/sdk/go-client` |
 | [python-client](python-client) | Python 3.9+ | distribution `openrec-client`, import `openrec` |
 
@@ -72,7 +72,7 @@ Add the installed client to a Maven project:
 <dependency>
     <groupId>com.openrec</groupId>
     <artifactId>rec-client</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
 </dependency>
 ```
 
